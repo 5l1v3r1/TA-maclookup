@@ -1,4 +1,4 @@
-#!/opt/splunk/bin/python
+#!/usr/bin/env python2.7
 # Copyright (C) 2014 MuS
 # http://answers.splunk.com/users/2122/mus
 #
@@ -31,7 +31,7 @@ def setup_logging(n):
     return logger
 
 # set URL to be used for query
-url = 'https://www.macvendorlookup.com/api/v2/'
+url = 'https://macvendors.co/api'
 
 # set regex for MAC address like xx:xx.. or xx-xx.. or xxxx.xxxx..
 regex = '[0-9A-Za-z]{2}[:-][0-9A-Za-z]{2}[:-][0-9A-Za-z]{2}[:-][0-9A-Za-z]{2}[:-][0-9A-Za-z]{2}[:-][0-9A-Za-z]{2}|[a-zA-Z0-9]{4}\.[a-zA-Z0-9]{4}\.[a-zA-Z0-9]{4}'
@@ -89,50 +89,44 @@ for line in results:
     # for each found mac
     for MAC in macs:
         logger.info( 'for each found MAC ...' )
-        try:
-            # query the URL
-            logger.info( 'Online : %s ...' % online )
-            if 'yes' in online:
-                x = 1/0
-                #logger.info( 'setup the online URL to query ...' )
-                #r = urllib2.urlopen(url + MAC)
-                #logger.info('Using %s as URL and %s as MAC' % (url, MAC))
-                #try:
-                #    # and read the result as JSON list of dicts
-                #    logger.info( 'and read the result as JSON list of dicts ...' )
-                #    data = json.loads(r.read().decode(r.info().getparam('charset') or 'utf-8'))
-                #    logger.info( 'got JSON list of dict: %s ' % data )
-                #except:
-                #    logger.error( 'failed to read the result for MAC %s' % MAC )
-                #    logger.error( 'using some dummy field ... ' )
-                #    data = [{u'addressL3': u'unknown', u'type': u'unknown', u'addressL2': u'unknown', u'endHex': u'unknown', u'country': u'unknown', u'addressL1': u'unknown', u'company': u'unknown', u'startHex': u'unknown', u'endDec': u'unknown', u'startDec': u'unknown'}]
-                ## now this is somekind ugly, but needed
-                ## get the dict out of the URL result list
-                #logger.info( 'get the dict out of the URL result list ...' )
-                #for dict in data:
-                #    try:
-                #       # add mac to dict
-                #       logger.info( 'add MAC to dict ...' )
-                #       dict['MAC'] = MAC
-                #       # more fancy stuff, updating the previous results with the new fields
-                #       logger.info( 'updating line with dict' )
-                #       line.update(dict)
-                #       # and put it into new list, so more dict can be added
-                #       logger.info( 'and put it into new list, so more dict can be added ...' )
-                #       list.append(line)
-                #    except:
-                #       logger.error( 'failed to build the list for the splunk output!' )
-                #       splunk.Intersplunk.generateErrorResults(': failed to build the list for the splunk output!')
-                #       exit()
-        except:
-            logger.error( 'This option is currently disabled due to the fact that the online API is not available. Please use the offline option instead.')
-            splunk.Intersplunk.generateErrorResults(': This option is currently disabled due to the fact that the online API is not available. Please use the offline option instead.')
-            #logger.error( 'failed to setup the URL!' )
-            #splunk.Intersplunk.generateErrorResults(': failed to setup the URL! Using %s as URL and %s as MAC' % (url, MAC))
-            exit()
-	try:
-            # query the netaddr library
-            if 'no' in online:
+        # query the URL
+        logger.info( 'Online : %s ...' % online )
+        if 'yes' in online:
+            try:
+                logger.info( 'setup the online URL to query ...' )
+                url2 = '%s/%s/json' % (url, MAC)
+                logger.info('Using %s as URL and %s as MAC' % (url2, MAC))
+                logger.info('connecting ... ')
+                r = urllib2.urlopen(url2)
+                logger.info('connected ...')
+            except:
+                logger.error( 'failed to setup the URL!' )
+                splunk.Intersplunk.generateErrorResults(': failed to setup the URL! Using %s as URL and %s as MAC' % (url2, MAC))
+                exit()
+            try:
+                # and read the result as JSON list of dicts
+                logger.info( 'and read the result as JSON list of dicts ...' )
+                data = json.loads(r.read().decode(r.info().getparam('charset') or 'utf-8'))
+                logger.info( 'got JSON list of dict: %s ' % data )
+            except:
+                logger.error( 'failed to read the result for MAC %s' % MAC )
+                splunk.Intersplunk.generateErrorResults(': failed to read the online result!')
+                exit()
+            # get the dict out of the URL result list
+            logger.info( 'get the dict out of the URL result list ...' )
+            try:
+                # and put it into new list, so more dict can be added
+                logger.info( 'adding result : %s ' % data['result'] )
+                list.append(data['result'])
+                logger.info( 'new list : %s ' % list )
+            except:
+                logger.error( 'failed to build the list for the splunk output!' )
+                splunk.Intersplunk.generateErrorResults(': failed to build the list for the splunk output!')
+                exit()
+
+        # query the netaddr library
+        if 'no' in online:
+	    try:
                 logger.info( 'setup the offline netaddr query ...' )
                 logger.info( 'using mac to lookup : %s ' % MAC)
                 lookup = netaddr.EUI(MAC)
@@ -148,11 +142,10 @@ for line in results:
                 logger.info( 'and put it into new list, so more dict can be added ...' )
                 list.append(line)
                 logger.info( 'new list : %s ' % list)
-        except:
-            logger.error( 'failed to use the netaddr module!' )
-            splunk.Intersplunk.generateErrorResults(': failed to use the netaddr module!')
-            exit()
-
+            except:
+                logger.error( 'failed to use the netaddr module!' )
+                splunk.Intersplunk.generateErrorResults(': failed to use the netaddr module!')
+                exit()
 
 # output the result to splunk
 logger.info( 'output the result to splunk> ...' )
