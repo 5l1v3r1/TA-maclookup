@@ -9,7 +9,7 @@
 
    Input requirements:
    The standard IEEE 802 MAC-48 address format is required.
-   The server where the search is running, must be able to connect to the internet, 
+   The server where the search is running, must be able to connect to the internet,
    since this lookup can happen on an internet DB ;)
    The nic MAC must be in the following format
    - 00:11:22:33:44:55
@@ -59,6 +59,9 @@ Github repository: https://github.com/M-u-S/TA-maclookup
 
 I validate all my apps with appinspect and the log can be found in the README
 folder of each app.
+
+Running Splunk on Windows? Good Luck, not my problem.
+
 
 ===Versions===
 Version/Date: 1.0 / October 2012
