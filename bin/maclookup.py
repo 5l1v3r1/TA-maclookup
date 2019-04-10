@@ -34,7 +34,7 @@ def setup_logging(n):
 url = 'https://macvendors.co/api'
 
 # set regex for MAC address like xx:xx.. or xx-xx.. or xxxx.xxxx..
-regex = '[0-9A-Za-z]{2}[:-][0-9A-Za-z]{2}[:-][0-9A-Za-z]{2}[:-][0-9A-Za-z]{2}[:-][0-9A-Za-z]{2}[:-][0-9A-Za-z]{2}|[a-zA-Z0-9]{4}\.[a-zA-Z0-9]{4}\.[a-zA-Z0-9]{4}'
+regex = '([0-9A-Fa-f]{2}[:-]){3}[0-9A-Fa-f]{2}|([a-fA-F0-9]{4}\.){2}[a-fA-F0-9]{4}'
 
 # set empty list to be used in Splunk output
 list = []
@@ -117,7 +117,8 @@ for line in results:
             try:
                 # and put it into new list, so more dict can be added
                 logger.info( 'adding result : %s ' % data['result'] )
-                list.append(data['result'])
+                line.update(data['result'])
+                list.append(line)
                 logger.info( 'new list : %s ' % list )
             except:
                 logger.error( 'failed to build the list for the splunk output!' )
@@ -130,11 +131,14 @@ for line in results:
                 logger.info( 'setup the offline netaddr query ...' )
                 logger.info( 'using mac to lookup : %s ' % MAC)
                 lookup = netaddr.EUI(MAC)
-                logger.info( 'netaddr lookup: %s ...' % lookup )
-                vendor = ','.join([lookup.oui.registration(reg).org for reg in range(lookup.oui.reg_count)])
+                logger.info( 'netaddr lookups: %s ...' % lookup )
+                if hasattr(lookup,'oui'):
+                    vendor = ','.join([lookup.oui.registration(reg).org for reg in range(lookup.oui.reg_count)])
+                else:
+                    vendor = 'Unknown'
                 logger.info('result from netaddr vendor :  %s ' % vendor)
                 logger.info( 'add vendor to dict ...' )
-                line['vendor'] = vendor
+                line['company'] = vendor
                 # more fancy stuff, updating the previous results with the new fields
                 logger.info( 'updated line : %s ' % line )
                 #line.update(dict)
