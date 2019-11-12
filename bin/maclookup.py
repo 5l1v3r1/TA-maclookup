@@ -146,8 +146,12 @@ for line in results:
                 logger.info( 'and put it into new list, so more dict can be added ...' )
                 list.append(line)
                 logger.info( 'new list : %s ' % list)
+            except netaddr.core.NotRegisteredError:
+                line['vendor'] = "Not Registered"
+                list.append(line)
             except:
-                logger.error( 'failed to use the netaddr module!' )
+                e = sys.exc_info()[0]
+                logger.error( "failed to use the netaddr module! %s" % e )
                 splunk.Intersplunk.generateErrorResults(': failed to use the netaddr module!')
                 exit()
 
