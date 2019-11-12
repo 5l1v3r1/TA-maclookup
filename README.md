@@ -75,3 +75,4 @@ Version/Date: 2.3 / January 2018 - bug fixes
 Version/Date: 2.4 / February 2018 - Bug fixes
 Version/Date: 2.5 / February 2018 - Added offline and field option
 Version/Date: 2.5.2 / February 2019 - Added new online service
+Version/Date: 2.5.3 / November 2019 - Fixed error handling

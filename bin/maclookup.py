@@ -142,10 +142,13 @@ for line in results:
                 logger.info( 'and put it into new list, so more dict can be added ...' )
                 list.append(line)
                 logger.info( 'new list : %s ' % list)
-            except:
+            except Exception as e:
                 logger.error( 'failed to use the netaddr module!' )
-                splunk.Intersplunk.generateErrorResults(': failed to use the netaddr module!')
-                exit()
+                # added error capturing when the MAC is not found in the netaddr module
+                # thanks to https://answers.splunk.com/users/128/ for pointing this out!
+                line['vendor']="not found"
+                line['maclookup_error']=str(e)
+                list.append(line)
 
 # output the result to splunk
 logger.info( 'output the result to splunk> ...' )
